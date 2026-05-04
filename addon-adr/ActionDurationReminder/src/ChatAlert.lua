@@ -72,6 +72,11 @@ l.getSavedVars -- #()->(#ChatAlertSavedVars)
   return settings.getSavedVars()
 end
 
+l.getAccountSavedVars -- #()->(#ChatAlertSavedVars)
+= function()
+  return settings.getAccountSavedVars()
+end
+
 --========================================
 --        control pool
 --========================================
@@ -538,7 +543,7 @@ l.registerWelcomeDialog -- #()->()
         text = addon.text("Enable"),
         callback = function(dialog)
           l.getSavedVars().chatAlertEnabled = true
-          l.getSavedVars().chatAlertPromptShown = true
+          l.getAccountSavedVars().chatAlertPromptShown = true
         end,
       },
       [2] =
@@ -546,7 +551,7 @@ l.registerWelcomeDialog -- #()->()
         text = addon.text("Settings"),
         callback = function(dialog)
           l.getSavedVars().chatAlertEnabled = true
-          l.getSavedVars().chatAlertPromptShown = true
+          l.getAccountSavedVars().chatAlertPromptShown = true
           zo_callLater(function()
             LibAddonMenu2:OpenToPanel('ADRAddonOptions')
           end, 100)
@@ -558,8 +563,9 @@ end
 
 l.showWelcomePrompt -- #()->()
 = function()
-  local savedVars = l.getSavedVars()
-  if savedVars.chatAlertPromptShown then return end
+  -- Always use account-wide storage for welcome prompt
+  local accountSavedVars = l.getAccountSavedVars()
+  if accountSavedVars.chatAlertPromptShown then return end
   l.registerWelcomeDialog()
   ZO_Dialogs_ShowDialog("ADR_CHAT_ALERT_WELCOME")
 end
@@ -580,7 +586,7 @@ end
 --========================================
 -- Public method to reset welcome prompt flag (for testing first-run experience)
 m.resetWelcomePrompt = function()
-  l.getSavedVars().chatAlertPromptShown = false
+  l.getAccountSavedVars().chatAlertPromptShown = false
 end
 
 addon.register("ChatAlert#M", m)

@@ -1,7 +1,12 @@
+3.154
+
+### Bug Fixes
+- Fixed Chat Alert welcome prompt showing on every character. The prompt is now properly account-wide.
+
 3.153
 
 ### Improvements
-- Added Chinese ability name patch to fix ESO translation typos (e.g., "鞭挞" -> "鞭笞") for correct ability matching.
+- Added Chinese ability name patch to fix ESO translation typos for correct ability matching.
 
 3.152
 
