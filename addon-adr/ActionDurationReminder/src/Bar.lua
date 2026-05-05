@@ -43,6 +43,7 @@ local barSavedVarsDefaults
     barProgressVisible = false,
     barProgressColor = {0.2, 0.2, 0.2},
     barProgressOpacity = 80,
+    barProgressDirection = "horizontal", -- "horizontal" or "vertical"
     barLowPriorityLabelColor = {0.6, 0.6, 0.6}, -- gray for low priority effects
     barLabelColor = {1, 1, 1}, -- white for normal label
     barLabelEndingColor = {1, 0, 0}, -- same as line ending color by default
@@ -607,6 +608,17 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
           width = "full",
           disabled = function() return not l.getSavedVars().barEnabled or not l.getSavedVars().barProgressVisible end,
           default = barSavedVarsDefaults.barProgressOpacity,
+        },{
+          type = "dropdown",
+          name = text("Progress Bar Direction"),
+          tooltip = text("Horizontal: left-fixed, shrinks right to left. Vertical: bottom-fixed, shrinks top to bottom."),
+          choices = {text("horizontal"), text("vertical")},
+          choicesValues = {"horizontal", "vertical"},
+          getFunc = function() return l.getSavedVars().barProgressDirection end,
+          setFunc = function(value) l.getSavedVars().barProgressDirection = value; l.updateWidgets(views.updateWidgetProgress) end,
+          width = "full",
+          default = barSavedVarsDefaults.barProgressDirection,
+          disabled = function() return not l.getSavedVars().barEnabled or not l.getSavedVars().barProgressVisible end,
         },{
           type = "colorpicker",
           name = text("Low Priority Effect Color"),

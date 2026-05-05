@@ -1,3 +1,8 @@
+3.156
+
+### New Features
+- Added progress bar direction option: horizontal (left-fixed, shrinks right to left) or vertical (bottom-fixed, shrinks top to bottom).
+
 3.155
 
 ### Bug Fixes

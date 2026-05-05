@@ -557,15 +557,25 @@ mWidget.updateWithAction -- #(#Widget:self, Models#Action:action,#number:now)->(
     local duration = action:getDuration()
     if duration > 0 then
       local parent = self.backdrop or self.slotIcon
-      local slotWidth = parent:GetWidth()
       local shrink = 1  -- Match cooldown line shrink
-      local lineMargin = savedVars.barCooldownThickness  -- Margin for cooldown line on right side
       local progress = remain / duration
-      local barWidth = (slotWidth - lineMargin - shrink) * progress
-      local barHeight = savedVars.barLabelFontSize + 4
       self.progressBar:ClearAnchors()
-      self.progressBar:SetAnchor(BOTTOMLEFT, parent, BOTTOMLEFT, shrink, savedVars.barLabelYOffset - 2)
-      self.progressBar:SetDimensions(barWidth, barHeight)
+      if savedVars.barProgressDirection == "vertical" then
+        -- Vertical: bottom-fixed, shrinks from top to bottom, full width
+        local slotWidth, slotHeight = parent:GetDimensions()
+        local barWidth = slotWidth - shrink * 2
+        local barHeight = slotHeight * progress
+        self.progressBar:SetAnchor(BOTTOMLEFT, parent, BOTTOMLEFT, shrink, -shrink)
+        self.progressBar:SetDimensions(barWidth, barHeight)
+      else
+        -- Horizontal: left-fixed, shrinks from right to left
+        local slotWidth = parent:GetWidth()
+        local lineMargin = savedVars.barCooldownThickness  -- Margin for cooldown line on right side
+        local barWidth = (slotWidth - lineMargin - shrink) * progress
+        local barHeight = savedVars.barLabelFontSize + 4
+        self.progressBar:SetAnchor(BOTTOMLEFT, parent, BOTTOMLEFT, shrink, savedVars.barLabelYOffset - 2)
+        self.progressBar:SetDimensions(barWidth, barHeight)
+      end
       self.progressBar:SetHidden(false)
     else
       self.progressBar:SetHidden(true)
