@@ -20,7 +20,7 @@ local DSS_CHATALERT_SKIP = {DS_CHATALERT, 'skip'}   -- chat alert skipped [K^]
 ---
 --@type ChatAlertSavedVars
 local chatAlertSavedVarsDefaults = {
-  chatAlertEnabled = true,
+  chatAlertEnabled = false,
   chatAlertDurationSeconds = 3,
   chatAlertMaxAlerts = 5,
   chatAlertChannelParty = true,
@@ -371,8 +371,8 @@ end
 
 l.onChatMessageChannel -- #(#number:eventCode,#MsgChannelType:channelType,#string:fromName,#string:text,#boolean:isCustomerService,#string:fromDisplayName)->()
 = function(eventCode, channelType, fromName, text, isCustomerService, fromDisplayName)
+  if not l.getAccountSavedVars().chatAlertEnabled then return end
   local savedVars = l.getSavedVars()
-  if not savedVars.chatAlertEnabled then return end
 
   -- Filter by channel
   local channelAllowed = false
@@ -535,29 +535,36 @@ l.registerWelcomeDialog -- #()->()
     {
       text = addon.text("ADR has a new Chat Alert feature! During combat, group chat messages often go unnoticed in the chat window. Chat Alert will display them as popup alerts on screen so you never miss important callouts.\n\nP.S. Yes, this is from 2026, but I promise it's the good CODE. — @Cloudor"),
     },
-    mustChoose = true,
     buttons =
     {
       [1] =
       {
         text = addon.text("Enable"),
         callback = function(dialog)
-          l.getSavedVars().chatAlertEnabled = true
-          l.getAccountSavedVars().chatAlertPromptShown = true
-        end,
-      },
-      [2] =
-      {
-        text = addon.text("Settings"),
-        callback = function(dialog)
-          l.getSavedVars().chatAlertEnabled = true
+          l.getAccountSavedVars().chatAlertEnabled = true
           l.getAccountSavedVars().chatAlertPromptShown = true
           zo_callLater(function()
             LibAddonMenu2:OpenToPanel('ADRAddonOptions')
           end, 100)
         end,
       },
+      [2] =
+      {
+        text = addon.text("Disable"),
+        callback = function(dialog)
+          l.getAccountSavedVars().chatAlertEnabled = false
+          l.getAccountSavedVars().chatAlertPromptShown = true
+        end,
+      },
     },
+    -- When dialog is closed without choosing a button, disable the feature
+    finishedCallback = function(dialog)
+      local accountSavedVars = l.getAccountSavedVars()
+      if not accountSavedVars.chatAlertPromptShown then
+        accountSavedVars.chatAlertEnabled = false
+        accountSavedVars.chatAlertPromptShown = true
+      end
+    end,
   }
 end
 
@@ -612,8 +619,8 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         type = "checkbox",
         name = text("Enable Chat Alert"),
         tooltip = text("Show group chat messages as popup alerts during combat"),
-        getFunc = function() return l.getSavedVars().chatAlertEnabled end,
-        setFunc = function(value) l.getSavedVars().chatAlertEnabled = value end,
+        getFunc = function() return l.getAccountSavedVars().chatAlertEnabled end,
+        setFunc = function(value) l.getAccountSavedVars().chatAlertEnabled = value end,
         width = "full",
         default = chatAlertSavedVarsDefaults.chatAlertEnabled,
       }, {
@@ -622,7 +629,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         tooltip = text("Only display chat alerts while in combat"),
         getFunc = function() return l.getSavedVars().chatAlertOnlyInCombat end,
         setFunc = function(value) l.getSavedVars().chatAlertOnlyInCombat = value end,
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
         width = "full",
         default = chatAlertSavedVarsDefaults.chatAlertOnlyInCombat,
       }, {
@@ -631,7 +638,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         tooltip = text("Show @UserID instead of character name for message sender"),
         getFunc = function() return l.getSavedVars().chatAlertShowUserId end,
         setFunc = function(value) l.getSavedVars().chatAlertShowUserId = value end,
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
         width = "full",
         default = chatAlertSavedVarsDefaults.chatAlertShowUserId,
       }, {
@@ -642,7 +649,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         setFunc = function(value) l.getSavedVars().chatAlertChannelParty = value end,
         width = "half",
         default = chatAlertSavedVarsDefaults.chatAlertChannelParty,
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
       }, {
         type = "checkbox",
         name = text("Say Channel"),
@@ -651,7 +658,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         setFunc = function(value) l.getSavedVars().chatAlertChannelSay = value end,
         width = "half",
         default = chatAlertSavedVarsDefaults.chatAlertChannelSay,
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
       }, {
         type = "checkbox",
         name = text("Whisper Channel"),
@@ -660,7 +667,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         setFunc = function(value) l.getSavedVars().chatAlertChannelWhisper = value end,
         width = "half",
         default = chatAlertSavedVarsDefaults.chatAlertChannelWhisper,
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
       }, {
         type = "checkbox",
         name = text("Guild Channel"),
@@ -669,7 +676,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         setFunc = function(value) l.getSavedVars().chatAlertChannelGuild = value end,
         width = "half",
         default = chatAlertSavedVarsDefaults.chatAlertChannelGuild,
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
       }, {
         type = "dropdown",
         name = text("Guild Prefix Format"),
@@ -680,7 +687,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         setFunc = function(value) l.getSavedVars().chatAlertGuildPrefixFormat = value end,
         width = "half",
         default = chatAlertSavedVarsDefaults.chatAlertGuildPrefixFormat,
-        disabled = function() return not l.getSavedVars().chatAlertEnabled or not l.getSavedVars().chatAlertChannelGuild end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled or not l.getSavedVars().chatAlertChannelGuild end,
       }, {
         type = "slider",
         name = text("Chat Alert Duration"),
@@ -689,7 +696,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         getFunc = function() return l.getSavedVars().chatAlertDurationSeconds end,
         setFunc = function(value) l.getSavedVars().chatAlertDurationSeconds = value end,
         width = "full",
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
         default = chatAlertSavedVarsDefaults.chatAlertDurationSeconds,
       }, {
         type = "slider",
@@ -699,7 +706,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         getFunc = function() return l.getSavedVars().chatAlertMaxAlerts end,
         setFunc = function(value) l.getSavedVars().chatAlertMaxAlerts = value end,
         width = "full",
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
         default = chatAlertSavedVarsDefaults.chatAlertMaxAlerts,
       }, {
         type = "slider",
@@ -709,7 +716,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         getFunc = function() return l.getSavedVars().chatAlertMaxMessageLength end,
         setFunc = function(value) l.getSavedVars().chatAlertMaxMessageLength = value end,
         width = "full",
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
         default = chatAlertSavedVarsDefaults.chatAlertMaxMessageLength,
       }, {
         type = "dropdown",
@@ -721,7 +728,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         setFunc = function(value) l.getSavedVars().chatAlertAlignment = value end,
         width = "full",
         default = chatAlertSavedVarsDefaults.chatAlertAlignment,
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
       }, {
         type = "button",
         name = text("Move Chat Alert"),
@@ -733,7 +740,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
           end, 10)
         end,
         width = "half",
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
       }, {
         type = "button",
         name = text("Reset Chat Alert Position"),
@@ -742,14 +749,14 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
           l.getSavedVars().chatAlertOffsetY = 150
         end,
         width = "half",
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
       }, {
         type = "checkbox",
         name = text("Play Chat Alert Sound"),
         tooltip = text("Play a sound when a chat alert appears"),
         getFunc = function() return l.getSavedVars().chatAlertPlaySound end,
         setFunc = function(value) l.getSavedVars().chatAlertPlaySound = value end,
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
         width = "full",
         default = chatAlertSavedVarsDefaults.chatAlertPlaySound,
       }, {
@@ -759,7 +766,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         getFunc = function() return l.findSoundIndex(l.getSavedVars().chatAlertSoundName) end,
         setFunc = function(value) l.getSavedVars().chatAlertSoundName = l.soundChoices[value]; PlaySound(SOUNDS[l.getSavedVars().chatAlertSoundName]) end,
         width = "full",
-        disabled = function() return not l.getSavedVars().chatAlertPlaySound or not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getSavedVars().chatAlertPlaySound or not l.getAccountSavedVars().chatAlertEnabled end,
         default = l.findSoundIndex(chatAlertSavedVarsDefaults.chatAlertSoundName),
       }, {
         type = "dropdown",
@@ -767,7 +774,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         choices = {"MEDIUM_FONT", "BOLD_FONT", "CHAT_FONT", "ANTIQUE_FONT", "HANDWRITTEN_FONT", "STONE_TABLET_FONT", "GAMEPAD_MEDIUM_FONT", "GAMEPAD_BOLD_FONT"},
         getFunc = function() return l.getSavedVars().chatAlertFontName end,
         setFunc = function(value) l.getSavedVars().chatAlertFontName = value end,
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
         width = "full",
         default = chatAlertSavedVarsDefaults.chatAlertFontName,
       }, {
@@ -776,7 +783,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         min = 14, max = 80, step = 2,
         getFunc = function() return l.getSavedVars().chatAlertFontSize end,
         setFunc = function(value) l.getSavedVars().chatAlertFontSize = value end,
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
         width = "full",
         default = chatAlertSavedVarsDefaults.chatAlertFontSize,
       }, {
@@ -785,7 +792,7 @@ addon.extend(settings.EXTKEY_ADD_MENUS, function()
         choices = {"soft-shadow-thin", "soft-shadow-thick", "thick-outline", "outline"},
         getFunc = function() return l.getSavedVars().chatAlertFontStyle end,
         setFunc = function(value) l.getSavedVars().chatAlertFontStyle = value end,
-        disabled = function() return not l.getSavedVars().chatAlertEnabled end,
+        disabled = function() return not l.getAccountSavedVars().chatAlertEnabled end,
         width = "full",
         default = chatAlertSavedVarsDefaults.chatAlertFontStyle,
       },
