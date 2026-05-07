@@ -13,6 +13,7 @@ local DS_EFFECT = "effect" -- debug switch for effect
 local DS_COMBAT = "combat" -- debug switch for combat events
 local DS_TARGET = "target" -- debug switch for target
 local DS_FILTER = "filter" -- debug switch for filter
+-- /script for id, action in pairs(ActionDurationReminder.getIdActionMap()) do d(action:toLogString()) end
 
 -- DSS (Debug Switch + SubSwitch) constants for addon.debugEnabled
 -- Filter
