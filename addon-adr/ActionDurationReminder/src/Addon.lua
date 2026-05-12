@@ -88,11 +88,18 @@ m.hookStart -- #(#()->():listener)->()
   table.insert(l.startListeners, listener)
 end
 
+local reservedWords = {
+  ["失衡"]=true
+}
 m.isSimpleWord -- #(#string:s)->(#boolean)
 = function(s)
   if s:find(' ',1,true) then return false end
   if s:find('(',1,true) then return false end
-  if s:byte(1) and s:byte(1)>128 then return s:len()<=6 end
+
+  if s:byte(1) and s:byte(1)>128 then
+    if reservedWords[s] then return false end
+    return s:len()<=6
+  end
   return true
 end
 

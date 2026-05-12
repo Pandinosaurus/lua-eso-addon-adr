@@ -875,6 +875,10 @@ mAction._matchesNewEffect -- #(#Action:self,#Effect:effect)->(#boolean)
   if effect.ability.icon:find('ability_debuff_min',1,true) then
     strict = false
   end
+    -- 4.0.x if it is offbalance debuff, it could also be non-strict
+  if effect.ability.icon:find('ability_debuff_offbalance',1,true) then
+    strict = false
+  end
   -- 4.0.x if it is following other effect's timeEnds, it could be non-strict
   if strict then -- try to accept continued effect
     local matchEffectsEnd = false
