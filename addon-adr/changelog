@@ -1,3 +1,9 @@
+3.157
+
+### Improvements
+- Added reserved words so they won't be treated as a short word in ability name matching.
+- Off Balance debuff now matches non-strictly, improving effect tracking for abilities that apply this debuff.
+
 3.156
 
 ### New Features
