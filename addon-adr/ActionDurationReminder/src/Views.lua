@@ -484,7 +484,10 @@ mWidget.updateWithAction -- #(#Widget:self, Models#Action:action,#number:now)->(
   -- stack label
   if l.getSavedVars().barStackLabelEnabled then
     -- stackLabel
-    if stackCount > 0 and not stackEffectHasStageInfo then
+    if action.mainEffectPurged then
+      self.stackLabel:SetText("|cFF00000|r")
+      self.stackLabel:SetHidden(false)
+    elseif stackCount > 0 and not stackEffectHasStageInfo then
       local stackText = string.format(action.stackCountMatch and '%d^' or '%d',stackCount)
       self.stackLabel:SetText(stackText)
       self.stackLabel:SetHidden(false)

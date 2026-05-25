@@ -107,6 +107,14 @@ local fRefinePath -- #(#string:path)->(#string)
   return path
 end
 
+local fSkillIconName -- #(#string:path)->(#string)
+= function(path)
+  if not path then return nil end
+  local name = path:match("([^/]+)%.") or path
+  name = name:gsub("_[ab]$", "")
+  return name:lower()
+end
+
 local fMatchIconPath -- #(#string:path1,#string:path2)->(#boolean)
 = function(path1, path2)
   if path1=='' or path1=='/' or path2=='' or path2=='/' then return false end
@@ -296,6 +304,7 @@ m.newAction -- #(#number:slotNum,#number:hotbarCategory)->(#Action)
   action.stackEffect2 = nil -- #Effect for triggered bonus stacks
   action.tickEffect = nil -- #Effect
   action.tickEffectDoubled = false -- #boolean
+  action.mainEffectPurged = false -- #boolean
   action.targetId = nil --#number
   setmetatable(action,{__index=mAction})
   return action
@@ -948,6 +957,9 @@ mAction.calclevel -- #(#Action:self, #Effect:effect)->(#number)
 
   -- Major/minor buff as side effect: demote to low priority
   if effect:isMajorMinorBuff() then
+    if self.mainEffectPurged and effect:isMinorBuff() then
+      return LEVEL_MAJOR_MINOR_BUFF
+    end
     if self.duration == 0 or effect.duration ~= self.duration then
       return LEVEL_MAJOR_MINOR_BUFF
     end
@@ -1200,6 +1212,13 @@ mAction.purgeEffect  -- #(#Action:self,#Effect:effect)->(#Effect)
       if addon.debugEnabled(DSS_MODEL_PURGE, e.ability.name) then
         addon.debug("[MP-]purged %s, from %s",e:toLogString(), self:toLogString())
       end
+      if not self.mainEffectPurged then
+        local purgedName = fSkillIconName(e.ability.icon)
+        local actionName = fSkillIconName(self.ability.icon)
+        if purgedName and actionName and purgedName == actionName then
+          self.mainEffectPurged = true
+        end
+      end
       oldEffect = e -- we need duration info to end action
       break
     end
@@ -1232,6 +1251,7 @@ mAction.purgeEffect  -- #(#Action:self,#Effect:effect)->(#Effect)
     end
   end
   local availableEffectCount = 0
+  local nonMinorBuffCount = 0
   local reason = ''
   for key, var in pairs(self.effectList) do
     if not var.ignored then
@@ -1246,6 +1266,9 @@ mAction.purgeEffect  -- #(#Action:self,#Effect:effect)->(#Effect)
       end
       if ok then
         availableEffectCount = availableEffectCount+1
+        if not var:isMinorBuff() then
+          nonMinorBuffCount = nonMinorBuffCount + 1
+        end
       end
     else
       reason = reason.. string.format('%s is ignored and not counted\n',var.ability.name)
@@ -1269,6 +1292,12 @@ mAction.purgeEffect  -- #(#Action:self,#Effect:effect)->(#Effect)
   else
     if addon.debugEnabled(DSS_MODEL_PURGE) then
       addon.debug("[MPn]purged and action is not end %s, %s", reason, self:toLogString())
+    end
+    if self.mainEffectPurged and nonMinorBuffCount == 0 and availableEffectCount > 0 then
+      self:recalcEffectLevels()
+      if addon.debugEnabled(DSS_MODEL_PURGE) then
+        addon.debug("[MPm]main effect purged, all remaining are minor buffs, demoted %s", self:toLogString())
+      end
     end
   end
   return oldEffect
@@ -1349,6 +1378,14 @@ mAction.saveEffect -- #(#Action:self, #Effect:effect)->(#Effect)
   end
 
   self.lastEffectTime = effect.startTime
+  -- Reset mainEffectPurged when a main effect (icon-matching) is saved
+  if self.mainEffectPurged then
+    local effectIconName = fSkillIconName(effect.ability.icon)
+    local actionIconName = fSkillIconName(self.ability.icon)
+    if effectIconName and actionIconName and effectIconName == actionIconName then
+      self.mainEffectPurged = false
+    end
+  end
   -- Calculate static level before inserting
   effect.level = self:calclevel(effect)
   effect.levelIsLow = effect.level >= LEVEL_THRESHOLD_LOW
@@ -1517,6 +1554,12 @@ mEffect.isMajorMinorBuff -- #(#Effect:self)->(#boolean)
 = function(self)
   local icon = self.ability.icon
   return not not (icon and (icon:find('ability_buff_ma', 1, true) or icon:find('ability_buff_mi', 1, true)))
+end
+
+mEffect.isMinorBuff -- #(#Effect:self)->(#boolean)
+= function(self)
+  local icon = self.ability.icon
+  return not not (icon and icon:find('ability_buff_mi', 1, true))
 end
 
 mEffect.toLogString --#(#Effect:self)->(#string)

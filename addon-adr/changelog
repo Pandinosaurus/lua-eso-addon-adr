@@ -1,3 +1,8 @@
+3.158
+
+### Improvements
+- When an action's main effect (icon-matching) is purged and only minor buff effects remain, those minor buffs are demoted to low priority, and a red "0" is displayed on the stack label to indicate the main effect is gone. For example, Arcanist's Runic Defense grants a heal-on-low-HP effect along with minor buffs — when the heal triggers and the main effect fades, the red "0" reminds you to recast even though minor buffs still have time left.
+
 3.157
 
 ### Improvements
