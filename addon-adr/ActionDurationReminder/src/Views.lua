@@ -484,10 +484,7 @@ mWidget.updateWithAction -- #(#Widget:self, Models#Action:action,#number:now)->(
   -- stack label
   if l.getSavedVars().barStackLabelEnabled then
     -- stackLabel
-    if action.mainEffectPurged then
-      self.stackLabel:SetText("|cFF00000|r")
-      self.stackLabel:SetHidden(false)
-    elseif stackCount > 0 and not stackEffectHasStageInfo then
+    if stackCount > 0 and not stackEffectHasStageInfo then
       local stackText = string.format(action.stackCountMatch and '%d^' or '%d',stackCount)
       self.stackLabel:SetText(stackText)
       self.stackLabel:SetHidden(false)
@@ -502,6 +499,10 @@ mWidget.updateWithAction -- #(#Widget:self, Models#Action:action,#number:now)->(
         self.stackLabel:SetHidden(false)
       end
       self.stackLabel:SetColor(unpack(l.getSavedVars().barStackLabelColor))
+    elseif action.mainEffectPurged then
+      local c = l.getSavedVars().barLabelEndingColor
+      self.stackLabel:SetText(string.format("|c%02X%02X%02X0|r", c[1] * 255, c[2] * 255, c[3] * 255))
+      self.stackLabel:SetHidden(false)
     else
       self.stackLabel:SetHidden(true)
     end

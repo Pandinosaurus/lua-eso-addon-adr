@@ -1212,7 +1212,7 @@ mAction.purgeEffect  -- #(#Action:self,#Effect:effect)->(#Effect)
       if addon.debugEnabled(DSS_MODEL_PURGE, e.ability.name) then
         addon.debug("[MP-]purged %s, from %s",e:toLogString(), self:toLogString())
       end
-      if not self.mainEffectPurged then
+      if not self.mainEffectPurged and e.endTime > now + 1000 then
         local purgedName = fSkillIconName(e.ability.icon)
         local actionName = fSkillIconName(self.ability.icon)
         if purgedName and actionName and purgedName == actionName then
