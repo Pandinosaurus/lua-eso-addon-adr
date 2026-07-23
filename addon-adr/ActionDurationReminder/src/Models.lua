@@ -1310,22 +1310,25 @@ mAction.saveEffect -- #(#Action:self, #Effect:effect)->(#Effect)
   if effect.stackCount>0 and effect.duration==0 then
     return
   end
-  -- update stack effect duration
+  -- update stack effect duration (only when same target; multi-target DoTs e.g. Carve bleed must not cross-contaminate)
   if self.stackEffect and effect.ability.id == self.stackEffect.ability.id then
-    if effect.duration >0 then
-      self.stackEffect.duration = effect.duration
-      self.stackEffect.endTime = effect.endTime
-      self.stackEffect.startTime = effect.startTime
+    if self.stackEffect.unitId == effect.unitId then
+      if effect.duration >0 then
+        self.stackEffect.duration = effect.duration
+        self.stackEffect.endTime = effect.endTime
+        self.stackEffect.startTime = effect.startTime
+      end
+      return
     end
-    return
-  end
-  if self.stackEffect2 and effect.ability.id == self.stackEffect2.ability.id then
-    if effect.duration >0 then
-      self.stackEffect2.duration = effect.duration
-      self.stackEffect2.endTime = effect.endTime
-      self.stackEffect2.startTime = effect.startTime
+  elseif self.stackEffect2 and effect.ability.id == self.stackEffect2.ability.id then
+    if self.stackEffect2.unitId == effect.unitId then
+      if effect.duration >0 then
+        self.stackEffect2.duration = effect.duration
+        self.stackEffect2.endTime = effect.endTime
+        self.stackEffect2.startTime = effect.startTime
+      end
+      return
     end
-    return
   end
 
   -- process effect with tickRate
@@ -1510,7 +1513,20 @@ mAction.updateStackInfo --#(#Action:self, #number:stackCount, #Effect:effect)->(
       end
     end
   elseif self.stackEffect.ability.id == effect.ability.id then
-    addType = 1
+    -- multi-target stacking DoT (e.g. Carve bleed on boss + adds): keep the
+    -- higher-stack instance, don't let a fresh low-stack add overwrite the boss.
+    if self.stackEffect.unitId == effect.unitId
+      or effect.stackCount > self.stackEffect.stackCount
+      or (self.stackEffect.duration>0
+        and self.stackEffect.endTime<=GetGameTimeMilliseconds()) then
+      addType = 1
+    else
+      addType = 0
+      if addon.debugEnabled(DSS_MODEL_STACK, effect.ability.name) then
+        addon.debug('[MS>]preserve stackEffect %d over new %d from %s',
+          self.stackEffect.stackCount, stackCount, effect:toLogString())
+      end
+    end
   elseif not self.stackEffect2 or self.stackEffect2.ability.id == effect.ability.id then
     addType = 2
   end

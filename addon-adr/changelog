@@ -1,3 +1,8 @@
+3.159
+
+### Bug Fixes
+- Fixed Carve (and other multi-target stacking DoTs) losing the boss's stack count and timer when adds spawn: the action now preserves the higher-stack instance (e.g. the boss's 3-stack / 32s long bleed) instead of letting a fresh 1-stack / 12s bleed from an add overwrite both the stack count and the displayed timer.
+
 3.158a
 
 ### Improvements
