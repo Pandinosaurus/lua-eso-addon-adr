@@ -718,6 +718,18 @@ mAction.getStackEffect -- #(#Action:self)->(#Effect)
     end
   end
   if self.stackEffect and (self.stackEffect.duration == 0 or self.stackEffect.endTime > GetGameTimeMilliseconds()) then
+    -- Permanent stack effect (e.g. Fire Keeper's tracker buff) goes stale when
+    -- the action's real timed effects have all faded. Skip this for pure
+    -- permanent-stack abilities (action.duration == 0, e.g. Grim Focus).
+    if self.stackEffect.duration == 0 and self.duration > 0 then
+      local now = GetGameTimeMilliseconds()
+      for _, e in ipairs(self.effectList) do
+        if e.duration > 0 and e.endTime > now and not e.ignored then
+          return self.stackEffect
+        end
+      end
+      return nil
+    end
     return self.stackEffect
   end
   return nil
@@ -960,7 +972,12 @@ mAction.calclevel -- #(#Action:self, #Effect:effect)->(#number)
     if self.mainEffectPurged and effect:isMinorBuff() then
       return LEVEL_MAJOR_MINOR_BUFF
     end
-    if self.duration == 0 or effect.duration ~= self.duration then
+    -- demote unless it's a same-source side effect: same duration AND started together
+    -- (Fire Keeper's Minor Fortitude/Heroism keep refreshing every tick, so their
+    -- startTime drifts past action.startTime + 1s and they get demoted)
+    if self.duration == 0
+      or effect.duration ~= self.duration
+      or math.abs(effect.startTime - self.startTime) > 1000 then
       return LEVEL_MAJOR_MINOR_BUFF
     end
   end

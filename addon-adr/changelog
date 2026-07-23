@@ -1,3 +1,9 @@
+3.160
+
+### Bug Fixes
+- Fixed Fire Keeper (and similar skills that apply a permanent tracker buff alongside a timed AoE) leaving a stale `stack=1` and a frozen timer after all timed effects expire: the permanent stack effect now goes stale when no timed effects remain in the action's effect list.
+- Major/minor buffs that share the action's duration but arrive (or keep refreshing) well after the action started — e.g. Minor Fortitude / Minor Heroism while standing in a Fire Keeper AoE — are now demoted to low-priority display instead of being treated as a same-source main effect.
+
 3.159
 
 ### Bug Fixes
