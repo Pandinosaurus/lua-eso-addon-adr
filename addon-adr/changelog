@@ -1,3 +1,8 @@
+3.161
+
+### Bug Fixes
+- Fixed Aspect of Terror's useful debuff being discarded by the "Ignore Mismatched Debuff Durations" option when it lasted longer than the skill's own duration: its icon is now excluded from the filter, same as the existing Rune of Edric Horror exclusion.
+
 3.160
 
 ### Bug Fixes
